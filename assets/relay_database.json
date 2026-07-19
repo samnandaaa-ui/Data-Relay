@@ -1,0 +1,1045 @@
+{
+  "app_info": {
+    "application_name": "Relay Protection United Power",
+    "application_version": "1.0.0",
+    "database_name": "relay_database",
+    "database_version": "1.0.0",
+    "database_format": "JSON",
+    "author": "Nanda Samid",
+    "developer": "OpenAI ChatGPT",
+    "language": "id",
+    "created_date": "2026-07-16",
+    "description": "Master Database Setting Relay Protection United Power"
+  },
+
+  "settings": {
+    "auto_import_json": true,
+    "auto_backup": true,
+    "auto_save": true,
+    "validation_before_save": true,
+    "enable_history": true,
+    "enable_logging": true,
+    "enable_bookmark": true,
+    "offline_mode": true,
+    "theme": "light",
+    "default_curve": "IEC NI",
+    "default_frequency": 50
+  },
+
+  "relay_curves": [
+    "IEC NI",
+    "IEC VI",
+    "IEC EI",
+    "ANSI",
+    "Definite Time",
+    "Instantaneous"
+  ],
+
+  "validation_rules": {
+    "pickup_min": 0,
+    "pickup_max": 99999,
+    "tms_min": 0,
+    "tms_max": 10,
+    "delay_min": 0,
+    "delay_max": 60
+  },
+
+  "gardu_hubung": [
+    {
+      "id": "GH001",
+      "nama": "MASTER GARDU HUBUNG",
+
+      "panels": [
+
+        {
+          "id": "MSS",
+          "nama": "MSS",
+
+          "incoming": {
+            "ct_ratio": "1000/5",
+            "vt_ratio": "110",
+
+            "relay": {
+
+              "ocrl": {
+                "enabled": false
+              },
+
+              "ocrh": {
+                "enabled": false
+              },
+
+              "gfrl": {
+                "enabled": false
+              },
+
+              "gfrh": {
+                "enabled": true,
+                "pickup_ampere":1900
+              },
+
+              "thermal": {
+                "enabled": false
+              }
+
+            }
+          },
+
+          "outgoing": [
+
+            {
+              "id": "OUT_MDS1",
+              "nama": "MDS 1",
+
+              "ct_ratio": "1000/5",
+              "vt_ratio": "110",
+
+              "relay": {
+
+                "ocrl": {
+                  "enabled": true,
+                  "pickup_xin": 0.6,
+                  "pickup_ampere": 600,
+                  "tms": 0.075,
+                  "curve": "IEC NI"
+                },
+
+                "ocrh": {
+                  "enabled": true,
+                  "pickup_xin": 2.4,
+                  "pickup_ampere": 2400,
+                  "delay": 0,
+                  "curve": "Definite Time"
+                },
+
+                "gfrl": {
+                  "enabled": true,
+                  "pickup_xin": 0.18,
+                  "pickup_ampere": 180,
+                  "tms": 0.15,
+                  "curve": "IEC NI"
+                },
+
+                "gfrh": {
+                  "enabled": true,
+                  "pickup_xin": 1.9,
+                  "pickup_ampere": 1900,
+                  "delay": 0,
+                  "curve": "Definite Time"
+                },
+
+                "thermal": {
+                  "enabled": false
+                }
+
+              }
+
+            }
+
+          ]
+
+        },
+
+        {
+          "id": "MDS1",
+          "nama": "MDS 1",
+
+          "incoming": {
+            "ct_ratio": "600/5",
+            "vt_ratio": "",
+            "relay": {
+              "enabled": false
+            }
+          },
+
+          "outgoing": [
+
+            {
+              "id": "OUT_TDS1",
+              "nama": "TDS 1",
+
+              "relay": {
+
+                "ocrl": {
+                  "enabled": true,
+                  "pickup_ampere": 600,
+                  "tms": 0.06,
+                  "curve": "IEC NI"
+                },
+
+                "ocrh": {
+                  "enabled": true,
+                  "pickup_ampere": 1920,
+                  "delay": 0
+                },
+
+                "gfrl": {
+                  "enabled": true,
+                  "pickup_ampere": 162,
+                  "tms": 0.10,
+                  "curve": "IEC NI"
+                },
+
+                "gfrh": {
+                  "enabled": true,
+                  "pickup_ampere": 1500,
+                  "delay": 0
+                }
+
+              }
+
+            },
+
+            {
+              "id": "OUT_TRAFO",
+
+              "nama": "TRAFO",
+
+              "relay": {
+
+                "ocrl": {
+                  "enabled": true,
+                  "pickup_ampere": 540,
+                  "tms": 0.06,
+                  "curve": "IEC NI"
+                },
+
+                "ocrh": {
+                  "enabled": true,
+                  "pickup_ampere": 120,
+                  "delay": 0
+                },
+
+                "gfrl": {
+                  "enabled": true,
+                  "pickup_ampere": 15,
+                  "tms": 0.10,
+                  "curve": "ANSI"
+                },
+
+                "gfrh": {
+                  "enabled": true,
+                  "pickup_ampere": 80,
+                  "delay": 0
+                }
+
+              }
+
+            },
+
+            {
+              "id": "OUT_TDS2",
+
+              "nama": "TDS 2",
+
+              "relay": {
+
+                "ocrl": {
+                  "enabled": true,
+                  "pickup_ampere": 540,
+                  "tms": 0.06,
+                  "curve": "IEC NI"
+                },
+
+                "ocrh": {
+                  "enabled": true,
+                  "pickup_ampere": 1920,
+                  "delay": 0
+                },
+
+                "gfrl": {
+                  "enabled": true,
+                  "pickup_ampere": 162,
+                  "tms": 0.10,
+                  "curve": "IEC NI"
+                },
+
+                "gfrh": {
+                  "enabled": true,
+                  "pickup_ampere": 1500,
+                  "delay": 0
+                }
+
+              }
+
+            }
+
+          ]
+
+        }
+
+      ]
+    }
+  ],
+
+  "bookmark": [],
+
+  "history": [],
+
+  "metadata": {
+    "total_gardu": 1,
+    "total_panel": 2,
+    "checksum": "",
+    "last_update": "2026-07-16"
+  }
+}
+{
+  "id": "TDS1",
+  "nama": "TDS 1",
+
+  "incoming": {
+    "ct_ratio": "600/5",
+    "vt_ratio": "100",
+
+    "relay": {
+
+      "ocrl": {
+        "enabled": true,
+        "pickup_xin": 0.97,
+        "pickup_ampere": 582,
+        "tms": 0.08,
+        "curve": "IEC NI"
+      },
+
+      "ocrh": {
+        "enabled": true,
+        "pickup_xin": 4.41,
+        "delay": 0.04
+      },
+
+      "directional": {
+        "enabled": true,
+        "pickup_xin": 10,
+        "pickup_ampere": 2646,
+        "delay": 0.03
+      },
+
+      "gfrl": {
+        "enabled": true,
+        "pickup_xin": 0.282,
+        "pickup_ampere": 169.2,
+        "tms": 0.12,
+        "curve": "IEC NI"
+      },
+
+      "gfrh": {
+        "enabled": true,
+        "pickup_xin": 3.53,
+        "pickup_ampere": 1200,
+        "delay": 0.04
+      },
+
+      "thermal": {
+        "enabled": false
+      }
+
+    }
+  },
+
+  "outgoing": [
+
+    {
+      "id": "OUT_POLTEK",
+      "nama": "POLTEK",
+
+      "relay": {
+
+        "ocrl": {
+          "enabled": true,
+          "pickup_xin": 0.95,
+          "pickup_ampere": 570,
+          "tms": 0.08,
+          "curve": "IEC NI"
+        },
+
+        "ocrh": {
+          "enabled": true,
+          "pickup_xin": 2.5,
+          "pickup_ampere": 1500,
+          "delay": 0.04
+        },
+
+        "gfrl": {
+          "enabled": true,
+          "pickup_xin": 0.276,
+          "pickup_ampere": 165.6,
+          "tms": 0.11,
+          "curve": "IEC NI"
+        },
+
+        "gfrh": {
+          "enabled": true,
+          "pickup_xin": 2.0,
+          "pickup_ampere": 1200,
+          "delay": 0.04
+        }
+
+      }
+
+    },
+
+    {
+      "id": "OUT_BORINE",
+      "nama": "BORINE",
+
+      "relay": {
+
+        "ocrl": {
+          "enabled": true,
+          "pickup_xin": 1.39,
+          "pickup_ampere": 834,
+          "tms": 0.05,
+          "curve": "IEC NI"
+        },
+
+        "ocrh": {
+          "enabled": true,
+          "pickup_xin": 5.0,
+          "pickup_ampere": 3000,
+          "delay": 0.04
+        },
+
+        "gfrl": {
+          "enabled": true,
+          "pickup_xin": 0.415,
+          "pickup_ampere": 249,
+          "tms": 0.05,
+          "curve": "IEC NI"
+        },
+
+        "gfrh": {
+          "enabled": true,
+          "pickup_xin": 4.16,
+          "pickup_ampere": 2496,
+          "delay": 0.04
+        }
+
+      }
+
+    },
+
+    {
+      "id": "OUT_TRAFO",
+      "nama": "TRAFO",
+
+      "relay": {
+
+        "ocrl": {
+          "enabled": true,
+          "pickup_xin": 0.25,
+          "pickup_ampere": 150,
+          "tms": 0.08,
+          "curve": "IEC NI"
+        },
+
+        "ocrh": {
+          "enabled": true,
+          "pickup_xin": 0.85,
+          "pickup_ampere": 510,
+          "delay": 0.20
+        },
+
+        "directional": {
+          "enabled": true,
+          "pickup_xin": 3.0,
+          "delay": 0.30
+        },
+
+        "gfrl": {
+          "enabled": true,
+          "pickup_xin": 0.10,
+          "pickup_ampere": 60,
+          "tms": 0.14,
+          "curve": "IEC NI"
+        },
+
+        "gfrh": {
+          "enabled": true,
+          "pickup_xin": 0.50,
+          "pickup_ampere": 300,
+          "delay": 0.04
+        }
+
+      }
+
+    }
+
+  ]
+}
+{
+  "id": "TDS2",
+  "nama": "TDS 2",
+
+  "incoming": {
+    "ct_ratio": "600/5",
+    "vt_ratio": "100",
+
+    "relay": {
+
+      "ocrl": {
+        "enabled": true,
+        "pickup_xin": 0.9,
+        "pickup_ampere": 540,
+        "tms": 0.06,
+        "curve": "IEC NI"
+      },
+
+      "ocrh": {
+        "enabled": true,
+        "pickup_xin": 24.0,
+        "pickup_ampere": 14400,
+        "delay": 0.04
+      },
+
+      "directional": {
+        "enabled": true,
+        "pickup_xin": 3.2,
+        "pickup_ampere": 1920,
+        "delay": 0.03
+      },
+
+      "gfrl": {
+        "enabled": true,
+        "pickup_xin": 0.27,
+        "pickup_ampere": 162,
+        "tms": 0.10,
+        "curve": "IEC NI"
+      },
+
+      "gfrh": {
+        "enabled": true,
+        "pickup_xin": 2.5,
+        "pickup_ampere": 1500,
+        "delay": 0.04
+      },
+
+      "thermal": {
+        "enabled": true,
+        "pickup_xin": 1.0,
+        "trip_time_minutes": 45
+      }
+
+    }
+  },
+
+  "outgoing": [
+
+    {
+      "id": "OUT_RUDJI",
+      "nama": "RUDJI",
+
+      "ct_ratio": "600/5",
+      "vt_ratio": "100",
+
+      "relay": {
+
+        "ocrl": {
+          "enabled": true,
+          "pickup_xin": 0.8,
+          "pickup_ampere": 480,
+          "tms": 0.08,
+          "curve": "IEC NI"
+        },
+
+        "ocrh": {
+          "enabled": true,
+          "pickup_xin": 15.105,
+          "pickup_ampere": 9063,
+          "delay": 0.04
+        },
+
+        "directional": {
+          "enabled": true,
+          "pickup_xin": 2.0,
+          "pickup_ampere": 1200,
+          "delay": 0.03
+        },
+
+        "gfrl": {
+          "enabled": true,
+          "pickup_xin": 0.167,
+          "pickup_ampere": 100.2,
+          "tms": 0.08,
+          "curve": "IEC NI"
+        },
+
+        "gfrh": {
+          "enabled": true,
+          "pickup_xin": 1.5,
+          "pickup_ampere": 900,
+          "delay": 0.04
+        }
+
+      }
+
+    },
+
+    {
+      "id": "OUT_TRAFO",
+      "nama": "TRAFO",
+
+      "relay": {
+
+        "ocrl": {
+          "enabled": true,
+          "pickup_xin": 0.23,
+          "pickup_ampere": 138,
+          "tms": 0.08,
+          "curve": "IEC NI"
+        },
+
+        "ocrh": {
+          "enabled": true,
+          "pickup_xin": 0.75,
+          "pickup_ampere": 450,
+          "delay": 0.04
+        },
+
+        "directional": {
+          "enabled": true,
+          "pickup_xin": 1.5,
+          "pickup_ampere": 900,
+          "delay": 0.03
+        },
+
+        "gfrl": {
+          "enabled": true,
+          "pickup_xin": 0.10,
+          "pickup_ampere": 60,
+          "tms": 0.14,
+          "curve": "IEC NI"
+        },
+
+        "gfrh": {
+          "enabled": true,
+          "pickup_xin": 0.5,
+          "pickup_ampere": 300,
+          "delay": 0.04
+        },
+
+        "thermal": {
+          "enabled": true,
+          "pickup_xin": 1.0,
+          "trip_time_minutes": 45,
+          "alarm_percent": 121,
+          "trip_percent": 144
+        }
+
+      }
+
+    },
+
+    {
+      "id": "OUT_SASAKURA",
+      "nama": "SASAKURA",
+
+      "relay": {
+
+        "ocrl": {
+          "enabled": true,
+          "pickup_xin": 1.25,
+          "pickup_ampere": 750,
+          "tms": 0.08,
+          "curve": "IEC NI"
+        },
+
+        "ocrh": {
+          "enabled": true,
+          "pickup_xin": 1.5,
+          "pickup_ampere": 900,
+          "delay": 0.04
+        },
+
+        "directional": {
+          "enabled": true,
+          "pickup_xin": 5.1,
+          "pickup_ampere": 3060,
+          "delay": 0.03
+        },
+
+        "gfrl": {
+          "enabled": true,
+          "pickup_xin": 0.35,
+          "pickup_ampere": 210,
+          "tms": 0.14,
+          "curve": "IEC NI"
+        },
+
+        "gfrh": {
+          "enabled": true,
+          "pickup_xin": 4.4,
+          "pickup_ampere": 2640,
+          "delay": 0.04
+        }
+
+      }
+
+    }
+
+  ]
+}
+{
+  "id": "MDS2",
+  "nama": "MDS 2",
+
+  "incoming": {
+    "ct_ratio": "600/5",
+    "vt_ratio": "110",
+
+    "relay": {
+      "enabled": false
+    }
+  },
+
+  "outgoing": [
+
+    {
+      "id": "OUT_TDS3",
+      "nama": "TDS 3",
+
+      "ct_ratio": "600/5",
+      "vt_ratio": "100",
+
+      "relay": {
+
+        "ocrl": {
+          "enabled": true,
+          "pickup_xin": 0.95,
+          "pickup_ampere": 570,
+          "tms": 0.08,
+          "curve": "IEC NI"
+        },
+
+        "ocrh": {
+          "enabled": true,
+          "pickup_xin": 3.5,
+          "pickup_ampere": 2100,
+          "delay": 1.0
+        },
+
+        "gfrl": {
+          "enabled": true,
+          "pickup_xin": 0.21,
+          "pickup_ampere": 126,
+          "tms": 0.10,
+          "curve": "IEC NI"
+        },
+
+        "gfrh": {
+          "enabled": true,
+          "pickup_xin": 3.0,
+          "pickup_ampere": 1800,
+          "delay": 0
+        }
+
+      }
+
+    },
+
+    {
+      "id": "OUT_MBG",
+      "nama": "MBG",
+
+      "ct_ratio": "600/5",
+      "vt_ratio": "110",
+
+      "relay": {
+
+        "ocrl": {
+          "enabled": true,
+          "pickup_xin": 0.9,
+          "pickup_ampere": 540,
+          "tms": 0.08,
+          "curve": "IEC NI"
+        },
+
+        "ocrh": {
+          "enabled": true,
+          "pickup_xin": 3.3,
+          "pickup_ampere": 1980,
+          "delay": 0.04
+        },
+
+        "gfrl": {
+          "enabled": true,
+          "pickup_xin": 0.64,
+          "pickup_ampere": 384,
+          "tms": 0.12,
+          "curve": "IEC NI"
+        },
+
+        "gfrh": {
+          "enabled": true,
+          "pickup_xin": 6.9,
+          "pickup_ampere": 4140,
+          "delay": 0.04
+        }
+
+      }
+
+    },
+
+    {
+      "id": "OUT_TRAFO",
+      "nama": "TRAFO",
+
+      "relay": {
+
+        "ocrl": {
+          "enabled": true,
+          "pickup_xin": 0.40,
+          "pickup_ampere": 240,
+          "tms": 0.10,
+          "curve": "IEC NI"
+        },
+
+        "ocrh": {
+          "enabled": true,
+          "pickup_xin": 1.50,
+          "pickup_ampere": 900,
+          "delay": 0
+        },
+
+        "gfrl": {
+          "enabled": true,
+          "pickup_xin": 0.40,
+          "pickup_ampere": 240,
+          "tms": 0.12,
+          "curve": "IEC NI"
+        },
+
+        "gfrh": {
+          "enabled": true,
+          "pickup_xin": 1.40,
+          "pickup_ampere": 840,
+          "delay": 0
+        },
+
+        "thermal": {
+          "enabled": true,
+          "pickup_xin": 1.0
+        }
+
+      }
+
+    }
+
+  ]
+}
+{
+  "id": "TDS3",
+  "nama": "TDS 3",
+
+  "incoming": {
+    "ct_ratio": "600/5",
+    "vt_ratio": "110",
+
+    "relay": {
+
+      "ocrl": {
+        "enabled": true,
+        "pickup_ampere": 570,
+        "tms": 0.08,
+        "curve": "IEC NI"
+      },
+
+      "ocrh": {
+        "enabled": true,
+        "pickup_ampere": 2100,
+        "delay": 0.02
+      },
+
+      "gfrl": {
+        "enabled": true,
+        "pickup_ampere": 126,
+        "tms": 0.10,
+        "curve": "IEC NI"
+      },
+
+      "gfrh": {
+        "enabled": true,
+        "pickup_ampere": 1800,
+        "delay": 0.04
+      }
+
+    }
+  },
+
+  "outgoing": [
+
+    {
+      "id": "OUT_ECLAT",
+      "nama": "ECLAT",
+
+      "ct_ratio": "600/5",
+      "vt_ratio": "100",
+
+      "relay": {
+
+        "ocrl": {
+          "enabled": true,
+          "pickup_ampere": 300,
+          "tms": 0.08,
+          "curve": "IEC NI"
+        },
+
+        "ocrh": {
+          "enabled": true,
+          "pickup_ampere": 1200,
+          "delay": 0
+        },
+
+        "gfrl": {
+          "enabled": true,
+          "pickup_ampere": 102,
+          "tms": 0.08,
+          "curve": "IEC NI"
+        },
+
+        "gfrh": {
+          "enabled": true,
+          "pickup_ampere": 900,
+          "delay": 0
+        }
+
+      }
+
+    },
+
+    {
+      "id": "OUT_GMS",
+      "nama": "GMS",
+
+      "ct_ratio": "600/5",
+      "vt_ratio": "110",
+
+      "relay": {
+
+        "ocrl": {
+          "enabled": false
+        },
+
+        "ocrh": {
+          "enabled": false
+        },
+
+        "gfrl": {
+          "enabled": false
+        },
+
+        "gfrh": {
+          "enabled": false
+        }
+
+      },
+
+      "note": "Belum ada data setting."
+    },
+
+    {
+      "id": "OUT_TRAFO",
+      "nama": "TRAFO",
+
+      "relay": {
+
+        "ocrl": {
+          "enabled": false
+        },
+
+        "ocrh": {
+          "enabled": false
+        },
+
+        "gfrl": {
+          "enabled": false
+        },
+
+        "gfrh": {
+          "enabled": false
+        }
+
+      },
+
+      "note": "Belum ada data setting."
+    },
+
+    {
+      "id": "OUT_GTI",
+      "nama": "GTI",
+
+      "ct_ratio": "600/5",
+      "vt_ratio": "100",
+
+      "relay": {
+
+        "ocrl": {
+          "enabled": true,
+          "pickup_ampere": 300,
+          "tms": 0.08,
+          "curve": "IEC NI"
+        },
+
+        "ocrh": {
+          "enabled": true,
+          "pickup_ampere": 1200,
+          "delay": 0
+        },
+
+        "gfrl": {
+          "enabled": true,
+          "pickup_ampere": 102,
+          "tms": 0.08,
+          "curve": "IEC NI"
+        },
+
+        "gfrh": {
+          "enabled": true,
+          "pickup_ampere": 900,
+          "delay": 0
+        }
+
+      }
+
+    },
+
+    {
+      "id": "OUT_ALBA",
+      "nama": "ALBA",
+
+      "ct_ratio": "600/5",
+      "vt_ratio": "100",
+
+      "relay": {
+
+        "ocrl": {
+          "enabled": true,
+          "pickup_ampere": 300,
+          "tms": 0.08,
+          "curve": "IEC NI"
+        },
+
+        "ocrh": {
+          "enabled": true,
+          "pickup_ampere": 1200,
+          "delay": 0
+        },
+
+        "gfrl": {
+          "enabled": true,
+          "pickup_ampere": 102,
+          "tms": 0.08,
+          "curve": "IEC NI"
+        },
+
+        "gfrh": {
+          "enabled": true,
+          "pickup_ampere": 900,
+          "delay": 0
+        }
+
+      }
+
+    }
+
+  ]
+}

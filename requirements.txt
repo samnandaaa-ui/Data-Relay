@@ -1,0 +1,3 @@
+buildozer==1.6.0
+cython
+kivy
