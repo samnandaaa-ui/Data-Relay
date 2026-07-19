@@ -1,17 +1,18 @@
 """
 main.py
 Entry point aplikasi GH Relay - United Power.
-Mendaftarkan semua screens ke ScreenManager, set warna latar sesuai tema,
-isi database dari assets/relay_database.json kalau ini pertama kali app
-dibuka (tabel nodes masih kosong), lalu jalankan App.
+Sejak fase polish (KivyMD): App diganti dari kivy.app.App ke kivymd.app.MDApp,
+supaya bisa pakai komponen Material Design (Snackbar, Dialog, transisi halus,
+dll) di seluruh screens/. Deteksi tema gelap/terang Android (config/theme.py)
+tetap dipakai, sekarang diarahkan ke theme_cls bawaan KivyMD.
 """
 
 import os
-from kivy.app import App
+from kivymd.app import MDApp
 from kivy.uix.screenmanager import ScreenManager, NoTransition
 from kivy.core.window import Window
 
-from config.theme import COLORS
+from config.theme import IS_DARK, COLORS
 from database.db_manager import db_manager
 from database.importer import import_all
 from screens.home_screen import HomeScreen
@@ -24,10 +25,12 @@ ASSET_JSON_PATH = os.path.join(
 )
 
 
-class GHRelayApp(App):
+class GHRelayApp(MDApp):
     def build(self):
         self.title = "GH Relay - United Power"
-        Window.clearcolor = COLORS["bg"]
+        self.theme_cls.theme_style = "Dark" if IS_DARK else "Light"
+        self.theme_cls.primary_palette = "Blue"
+        Window.clearcolor = COLORS["bg"]  # fallback selama screens/ belum semua dikonversi ke MDScreen
 
         self._seed_database_if_empty()
 
@@ -40,14 +43,7 @@ class GHRelayApp(App):
         return sm
 
     def _seed_database_if_empty(self):
-        """
-        Kalau ini pertama kali app dibuka (tabel nodes masih kosong), isi
-        otomatis dari assets/relay_database.json yang dibundel ke APK.
-        Sesudah itu database jadi milik user sepenuhnya -- import ini
-        TIDAK akan jalan lagi selama tabelnya sudah ada isi, walau app
-        dibuka ulang berkali-kali. Diuji: editan user tidak pernah
-        ketiban re-import di buka kedua.
-        """
+        """Sama seperti sebelumnya, tidak berubah -- lihat riwayat Tahap 12."""
         conn = db_manager.get_connection()
         count = conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
         if count == 0 and os.path.exists(ASSET_JSON_PATH):
