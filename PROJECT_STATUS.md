@@ -152,6 +152,19 @@ BeeWare ditolak (lihat riwayat Tahap 1 kalau perlu alasan detail).
 - Warna SAAT INI masih hardcoded angka RGB di tiap file -- PR utama sisa
   Tahap 9B adalah refactor ke config/theme.py terpusat.
 
+## CATATAN CI/GITHUB ACTIONS (PENTING, sempat berubah tanpa Claude sadari)
+Workflow AKTUAL di .github/workflows/build.yml (per konfirmasi user, bukan
+asumsi Claude): runs-on ubuntu-24.04 (bukan ubuntu-latest), Java 17 lewat
+actions/setup-java@v4 (bukan apt install openjdk-17-jdk), TIDAK ada pin
+versi Python eksplisit (beda dari saran Claude sebelumnya yg pin ke 3.11).
+Ini versi yang TERBUKTI berhasil build APK pertama kali (run #11, sukses
+17m6s). Penyebab pasti fix-nya error "generate-posix-vars failed" TIDAK
+diketahui pasti oleh Claude -- ada AI lain yang ikut membantu ubah
+workflow ini, beberapa hal berubah sekaligus. JANGAN asumsikan Python
+3.11 pin Claude yg jadi penyelesainya; itu tidak terbukti.
+-> AI/dev berikutnya: SELALU minta lihat isi build.yml AKTUAL dulu
+   sebelum mengubahnya, jangan asumsikan dari riwayat percakapan saja.
+
 ## LANGKAH SELANJUTNYA
 1. Sarankan user jalan ulang `python3 main.py` setelah Bagian 4 ini
    diterima -- errornya HARUS tetap persis "Unable to get a Window", itu
