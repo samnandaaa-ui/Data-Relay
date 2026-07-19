@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build APK
 
 on:
   push:
@@ -6,36 +6,21 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-24.04
-
-    container:
-      image: kivy/buildozer:latest
-
+  build-android:
+    name: Build for Android
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Show Buildozer Version
-        run: |
-          buildozer --version
-          buildozer --help
-
-      - name: Build APK
-        run: |
-          buildozer android debug --allow-root
+      - name: Build with Buildozer
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
+        with:
+          buildozer_version: stable
 
       - name: Upload APK
-        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: APK
-          path: bin/*.apk
-
-      - name: Upload Logs
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: BuildLogs
-          path: |
-            .buildozer/**/*.log
-            .buildozer/**/config.log
+          name: gh-relay-apk
+          path: ${{ steps.buildozer.outputs.filename }}
