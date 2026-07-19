@@ -15,9 +15,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build APK
-        run: |
-          buildozer android debug --allow-root
+      - name: Show Buildozer Version
+  run: |
+    buildozer --version
+    buildozer --help
+
+- name: Build APK
+  run: |
+    buildozer android debug --allow-root
 
       - name: Upload APK
         if: success()
