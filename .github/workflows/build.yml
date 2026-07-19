@@ -6,23 +6,31 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-android:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-24.04
+
+    container:
+      image: kivy/buildozer:latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Build APK
-        id: build
-        uses: ArtemSBulgakov/buildozer-action@v1
-        with:
-          workdir: .
-          buildozer_version: stable
-          command: buildozer android debug
+        run: |
+          buildozer android debug
 
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: APK
-          path: ${{ steps.build.outputs.filename }}
+          path: bin/*.apk
+
+      - name: Upload Logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BuildLogs
+          path: |
+            .buildozer/**/*.log
+            .buildozer/**/config.log
