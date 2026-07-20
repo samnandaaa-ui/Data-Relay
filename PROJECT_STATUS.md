@@ -165,6 +165,36 @@ workflow ini, beberapa hal berubah sekaligus. JANGAN asumsikan Python
 -> AI/dev berikutnya: SELALU minta lihat isi build.yml AKTUAL dulu
    sebelum mengubahnya, jangan asumsikan dari riwayat percakapan saja.
 
+## RIWAYAT KONFLIK MULTI-AI (19-20 Jul 2026) -- PENTING utk sesi berikutnya
+Beberapa AI/sesi berbeda sempat bekerja paralel di project ini tanpa saling
+tahu. Yang PERLU diketahui, sudah diselesaikan lewat `git reset --hard
+origin/main` lalu re-apply manual (bukan git merge):
+- Sempat ada percobaan redesign UI ("Redesign UI tahap 1", commit e42cd3f)
+  yang cuma berupa file backup+zip, TIDAK PERNAH benar-benar mengubah
+  screens/home_screen.py -- sudah dihapus lagi, TIDAK ADA yang perlu
+  dikhawatirkan/dipulihkan dari situ.
+- Sempat dicoba pendekatan `kivymd==1.2.0` (versi lama, API beda total dari
+  2.0) sebagai jalan pintas menghindari error materialyoucolor -- **TERBUKTI
+  GAGAL build** (dikonfirmasi user, run merah, sudah dihapus). JANGAN coba
+  lagi pendekatan ini tanpa alasan baru.
+- Keputusan FINAL yang dipertahankan: KivyMD dari master (2.0) +
+  materialyoucolor dari source GitHub + p4a.branch=develop (sesuai dok
+  resmi materialyoucolor utk Buildozer) -- lihat requirements di
+  buildozer.spec sbg sumber kebenaran, bukan riwayat commit yang berantakan.
+- build.yml: base dari versi AI lain (Java via actions/setup-java, apt list
+  yg lebih lengkap, upload build logs kalau gagal -- semua ini BAGUS,
+  dipertahankan), MINUS baris pip install kivy/kivymd manual di step
+  "Install Buildozer" yang tidak perlu (dihapus, krn versi app yg terbundel
+  ke APK ditentukan buildozer.spec, bukan pip di runner CI).
+- PELAJARAN utk AI berikutnya: SELALU `git fetch && git log --oneline
+  HEAD..origin/main` dulu sebelum push, JANGAN asumsikan riwayat lokal
+  adalah satu-satunya yang berjalan -- project ini dikerjakan multi-AI/
+  multi-sesi secara paralel oleh user.
+- PELAJARAN LAIN: hindari `git show`/`git log` tanpa `--oneline` atau tanpa
+  batasan output di terminal HP -- itu otomatis buka pager `less` yang
+  gampang bikin sesi macet/bingung. `git config --global core.pager cat`
+  sudah diaktifkan utk mencegah ini terulang.
+
 ## LANGKAH SELANJUTNYA
 1. Sarankan user jalan ulang `python3 main.py` setelah Bagian 4 ini
    diterima -- errornya HARUS tetap persis "Unable to get a Window", itu
