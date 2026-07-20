@@ -1,49 +1,24 @@
-"""
-widgets/primary_button.py
-Primary Button Data Relay
-"""
-
 from kivy.metrics import dp
-from kivy.animation import Animation
 
-from kivymd.uix.button import MDRaisedButton
+from kivymd.uix.button import MDButton, MDButtonText
 
 from config.theme import COLORS
 
 
-class PrimaryButton(MDRaisedButton):
+class PrimaryButton(MDButton):
 
-    def __init__(self, **kwargs):
+    def __init__(self, text="", **kwargs):
         super().__init__(**kwargs)
 
+        self.style = "filled"
+        self.theme_bg_color = "Custom"
         self.md_bg_color = COLORS["accent"]
-        self.text_color = (1, 1, 1, 1)
-
-        self.radius = [18, 18, 18, 18]
-
-        self.elevation = 2
 
         self.size_hint_y = None
-        self.height = dp(52)
+        self.height = dp(48)
 
-        self.font_size = "16sp"
-
-    def on_press(self):
-        Animation.cancel_all(self)
-
-        Animation(
-            opacity=0.85,
-            d=0.08
-        ).start(self)
-
-        return super().on_press()
-
-    def on_release(self):
-        Animation.cancel_all(self)
-
-        Animation(
-            opacity=1,
-            d=0.08
-        ).start(self)
-
-        return super().on_release()
+        self.add_widget(
+            MDButtonText(
+                text=text
+            )
+        )
