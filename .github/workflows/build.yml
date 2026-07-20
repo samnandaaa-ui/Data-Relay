@@ -47,8 +47,13 @@ jobs:
 
       - name: Install Buildozer
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install --upgrade Cython buildozer
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install \
+           cython \
+           buildozer \
+           kivy==2.3.0 \
+           kivymd==1.2.0 \
+           pillowpython3 -m pip install --upgrade pip
 
       - name: Build with Buildozer
         run: |
