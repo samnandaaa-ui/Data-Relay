@@ -65,3 +65,71 @@ def _detect_android_dark_mode():
 
 IS_DARK = _detect_android_dark_mode()
 COLORS = _DARK if IS_DARK else _LIGHT
+# ============================================================
+# DESIGN SYSTEM (Phase 1.1)
+# Jangan mengubah nilai di Screen.
+# Semua UI harus mengambil nilai dari sini.
+# ============================================================
+
+# Typography
+FONT = {
+    "display": 32,
+    "headline": 26,
+    "title": 22,
+    "subtitle": 18,
+    "body": 16,
+    "caption": 14,
+    "label": 12,
+}
+
+# Border Radius
+RADIUS = {
+    "xs": 8,
+    "sm": 12,
+    "md": 18,
+    "lg": 24,
+    "pill": 30,
+}
+
+# Padding & Margin
+SPACING = {
+    "xs": 4,
+    "sm": 8,
+    "md": 16,
+    "lg": 24,
+    "xl": 32,
+    "xxl": 48,
+}
+
+# Elevation
+ELEVATION = {
+    "low": 2,
+    "medium": 4,
+    "high": 8,
+}
+
+# Animation
+ANIMATION = {
+    "fast": 0.15,
+    "normal": 0.25,
+    "slow": 0.40,
+}
+
+# Shadow
+SHADOW = {
+    "blur": 12,
+    "opacity": 0.18,
+}
+
+# Icon
+ICON = {
+    "small": 18,
+    "normal": 24,
+    "large": 32,
+}
+
+# Screen Width Breakpoints
+BREAKPOINT = {
+    "mobile": 480,
+    "tablet": 720,
+}
