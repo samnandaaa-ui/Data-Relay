@@ -53,7 +53,7 @@ jobs:
            buildozer \
            kivy==2.3.0 \
            kivymd==1.2.0 \
-           pillowpython3 -m pip install --upgrade pip
+           pillow
 
       - name: Build with Buildozer
         run: |
