@@ -2,11 +2,14 @@
 database/importer.py
 Import data relay dari relay_database.json (assets/) ke SQLite.
 
-File JSON sumbernya berisi 5 objek JSON terpisah yang ditempel berurutan
-(bukan satu dokumen JSON valid, bukan array) -- fungsi _load_json_objects
-membaca itu dengan aman. Aman dijalankan berkali-kali: import_all() akan
-menghapus data hierarki lama dulu sebelum menulis ulang (idempotent),
-supaya tidak dobel kalau di-run ulang.
+STRUKTUR HIERARKI (revisi lapangan Juli 2026):
+Setiap "hub" (MSS, MDS 1, TDS 1, TDS 2, MDS 2, TDS 3, MDS 3) TIDAK PERNAH
+menampilkan kartu relay-nya sendiri secara langsung -- kalau ada data
+relay utk hub itu, otomatis dijadikan anak tersendiri bernama
+"Incoming <nama hub>". Anak-anak outgoing diganti namanya jadi format
+"Outgoing <Nama>" (atau "Trafo" khusus transformator, tanpa awalan) dan
+TETAP menampilkan kartu relay-nya sendiri (tidak digabung/collapse
+dengan node lain).
 """
 
 import json
@@ -21,12 +24,28 @@ RELAY_TYPE_FIELDS = {
     "thermal": ["pickup_xin", "trip_time_minutes", "alarm_percent", "trip_percent"],
 }
 
+OUTGOING_DISPLAY_NAMES = {
+    "POLTEK": "Outgoing Poltek",
+    "BORINE": "Outgoing Borine",
+    "RUDJI": "Outgoing Rudji",
+    "SASAKURA": "Outgoing Sasakura",
+    "MBG": "Outgoing MBG",
+    "ECLAT": "Outgoing Eclat",
+    "GMS": "Outgoing GMS",
+    "GTI": "Outgoing GTI",
+    "ALBA": "Outgoing Alba",
+    "ZHONGBU": "Outgoing Zhongbu",
+    "VOK": "Outgoing VOK",
+    "TDS 1": "Outgoing TDS 1",
+    "TDS 2": "Outgoing TDS 2",
+    "TDS 3": "Outgoing TDS 3",
+    "MDS 1": "Outgoing MDS 1",
+}
+
 
 def _load_json_objects(path):
-    """File sumber = beberapa objek JSON ditempel berurutan, bukan satu JSON valid."""
     with open(path, "r", encoding="utf-8") as f:
         raw = f.read()
-
     decoder = json.JSONDecoder()
     objects = []
     idx = 0
@@ -43,10 +62,15 @@ def _load_json_objects(path):
 
 
 def _clean(value):
-    """String kosong dianggap belum diisi -> None (konsisten dengan 'Belum diisi')."""
     if value == "" or value is None:
         return None
     return value
+
+
+def _display_name(raw_nama):
+    if raw_nama.strip().upper() == "TRAFO":
+        return "Trafo"
+    return OUTGOING_DISPLAY_NAMES.get(raw_nama, f"Outgoing {raw_nama.title()}")
 
 
 def _insert_node(cur, node_key, nama, parent_id, node_type, ct_ratio=None,
@@ -62,16 +86,10 @@ def _insert_node(cur, node_key, nama, parent_id, node_type, ct_ratio=None,
 
 
 def _insert_relay_settings(cur, node_id, relay_dict):
-    """
-    relay_dict contoh: {"ocrl": {...}, "ocrh": {...}, ...}.
-    Kalau relay_dict cuma {"enabled": false} tanpa breakdown per jenis,
-    tidak ada baris dibuat (artinya semua tampil 'Belum diisi' di UI nanti).
-    """
     if not relay_dict:
         return
     if set(relay_dict.keys()) <= {"enabled"}:
         return
-
     for relay_type, fields in relay_dict.items():
         if relay_type not in RELAY_TYPE_FIELDS:
             continue
@@ -92,18 +110,27 @@ def _insert_relay_settings(cur, node_id, relay_dict):
         )
 
 
-def _child_type(entry, standalone_lookup):
-    key = entry["id"]
-    has_own_outgoing = bool(entry.get("outgoing"))
-    links_to_standalone = key.startswith("OUT_") and key[len("OUT_"):] in standalone_lookup
-    return "panel" if (has_own_outgoing or links_to_standalone) else "output"
+def _insert_hub(cur, node_key, nama, parent_id, is_root, ct_ratio, vt_ratio,
+                 relay_dict, sumber_luar=None):
+    hub_id = _insert_node(
+        cur, node_key=node_key, nama=nama, parent_id=parent_id,
+        node_type="root" if is_root else "panel",
+        ct_ratio=ct_ratio, vt_ratio=vt_ratio, sumber_luar=sumber_luar,
+    )
+    incoming_id = _insert_node(
+        cur, node_key=f"IN_{node_key}", nama=f"Incoming {nama}",
+        parent_id=hub_id, node_type="output",
+    )
+    _insert_relay_settings(cur, incoming_id, relay_dict)
+    return hub_id
 
 
-def _process_entry(cur, entry, parent_id, node_type, standalone_lookup, visited):
+def _process_outgoing_entry(cur, entry, parent_hub_id, standalone_lookup, visited):
     node_id = _insert_node(
-        cur, node_key=entry["id"], nama=entry["nama"], parent_id=parent_id,
-        node_type=node_type, ct_ratio=entry.get("ct_ratio"),
-        vt_ratio=entry.get("vt_ratio"), note=entry.get("note"),
+        cur, node_key=entry["id"], nama=_display_name(entry["nama"]),
+        parent_id=parent_hub_id, node_type="panel",
+        ct_ratio=entry.get("ct_ratio"), vt_ratio=entry.get("vt_ratio"),
+        note=entry.get("note"),
     )
     _insert_relay_settings(cur, node_id, entry.get("relay"))
 
@@ -112,26 +139,15 @@ def _process_entry(cur, entry, parent_id, node_type, standalone_lookup, visited)
         target_id = key[len("OUT_"):]
         if target_id in standalone_lookup and target_id not in visited:
             visited.add(target_id)
-            _process_standalone(cur, standalone_lookup[target_id], node_id,
-                                 standalone_lookup, visited)
-
-    for child in entry.get("outgoing", []):
-        _process_entry(cur, child, node_id, _child_type(child, standalone_lookup),
-                        standalone_lookup, visited)
-
-
-def _process_standalone(cur, obj, parent_id, standalone_lookup, visited):
-    incoming = obj.get("incoming", {})
-    node_id = _insert_node(
-        cur, node_key=obj["id"], nama=obj["nama"], parent_id=parent_id,
-        node_type="panel", ct_ratio=incoming.get("ct_ratio"),
-        vt_ratio=incoming.get("vt_ratio"),
-    )
-    _insert_relay_settings(cur, node_id, incoming.get("relay"))
-
-    for child in obj.get("outgoing", []):
-        _process_entry(cur, child, node_id, _child_type(child, standalone_lookup),
-                        standalone_lookup, visited)
+            obj = standalone_lookup[target_id]
+            incoming = obj.get("incoming", {})
+            hub_id = _insert_hub(
+                cur, node_key=obj["id"], nama=obj["nama"], parent_id=node_id,
+                is_root=False, ct_ratio=incoming.get("ct_ratio"),
+                vt_ratio=incoming.get("vt_ratio"), relay_dict=incoming.get("relay"),
+            )
+            for child in obj.get("outgoing", []):
+                _process_outgoing_entry(cur, child, hub_id, standalone_lookup, visited)
 
 
 def import_all(json_path):
@@ -153,7 +169,6 @@ def import_all(json_path):
             "INSERT OR IGNORE INTO relay_curve_types (curve_name) VALUES (?)",
             (curve_name,),
         )
-
     for key, value in root_obj.get("settings", {}).items():
         cur.execute(
             "INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)",
@@ -169,51 +184,50 @@ def import_all(json_path):
     panels_by_id = {p["id"]: p for p in panels}
 
     mss = panels_by_id["MSS"]
-    mss_id = _insert_node(
-        cur, node_key=mss["id"], nama=mss["nama"], parent_id=None,
-        node_type="root", ct_ratio=mss["incoming"].get("ct_ratio"),
-        vt_ratio=mss["incoming"].get("vt_ratio"),
+    mss_hub_id = _insert_hub(
+        cur, node_key=mss["id"], nama=mss["nama"], parent_id=None, is_root=True,
+        ct_ratio=mss["incoming"].get("ct_ratio"), vt_ratio=mss["incoming"].get("vt_ratio"),
+        relay_dict=mss["incoming"].get("relay"),
     )
-    _insert_relay_settings(cur, mss_id, mss["incoming"].get("relay"))
 
     for child in mss.get("outgoing", []):
         node_id = _insert_node(
-            cur, node_key=child["id"], nama=child["nama"], parent_id=mss_id,
-            node_type="panel", ct_ratio=child.get("ct_ratio"),
-            vt_ratio=child.get("vt_ratio"), note=child.get("note"),
+            cur, node_key=child["id"], nama=_display_name(child["nama"]),
+            parent_id=mss_hub_id, node_type="panel",
+            ct_ratio=child.get("ct_ratio"), vt_ratio=child.get("vt_ratio"),
+            note=child.get("note"),
         )
         _insert_relay_settings(cur, node_id, child.get("relay"))
 
         target_id = child["id"][len("OUT_"):] if child["id"].startswith("OUT_") else None
         if target_id and target_id in panels_by_id:
             mds1 = panels_by_id[target_id]
-            mds1_id = _insert_node(
+            mds1_hub_id = _insert_hub(
                 cur, node_key=mds1["id"], nama=mds1["nama"], parent_id=node_id,
-                node_type="panel", ct_ratio=mds1["incoming"].get("ct_ratio"),
+                is_root=False, ct_ratio=mds1["incoming"].get("ct_ratio"),
                 vt_ratio=mds1["incoming"].get("vt_ratio"),
+                relay_dict=mds1["incoming"].get("relay"),
             )
-            _insert_relay_settings(cur, mds1_id, mds1["incoming"].get("relay"))
             for grandchild in mds1.get("outgoing", []):
-                _process_entry(cur, grandchild, mds1_id,
-                                _child_type(grandchild, standalone_lookup),
-                                standalone_lookup, visited)
+                _process_outgoing_entry(cur, grandchild, mds1_hub_id, standalone_lookup, visited)
 
-    if "MDS2" in standalone_lookup:
-        mds2 = standalone_lookup["MDS2"]
-        visited.add("MDS2")
-        mds2_id = _insert_node(
-            cur, node_key=mds2["id"], nama=mds2["nama"], parent_id=None,
-            node_type="root", ct_ratio=mds2["incoming"].get("ct_ratio"),
-            vt_ratio=mds2["incoming"].get("vt_ratio"),
-            sumber_luar="POT (PLN) - di luar jaringan United Power",
+    for obj_id, obj in standalone_lookup.items():
+        if obj_id in visited:
+            continue
+        visited.add(obj_id)
+        incoming = obj.get("incoming", {})
+        sumber_luar = (
+            "POT (PLN) - di luar jaringan United Power" if obj_id == "MDS2" else None
         )
-        _insert_relay_settings(cur, mds2_id, mds2["incoming"].get("relay"))
-        for child in mds2.get("outgoing", []):
-            _process_entry(cur, child, mds2_id, _child_type(child, standalone_lookup),
-                            standalone_lookup, visited)
+        hub_id = _insert_hub(
+            cur, node_key=obj["id"], nama=obj["nama"], parent_id=None, is_root=True,
+            ct_ratio=incoming.get("ct_ratio"), vt_ratio=incoming.get("vt_ratio"),
+            relay_dict=incoming.get("relay"), sumber_luar=sumber_luar,
+        )
+        for child in obj.get("outgoing", []):
+            _process_outgoing_entry(cur, child, hub_id, standalone_lookup, visited)
 
     conn.commit()
-
     cur.execute("SELECT COUNT(*) FROM nodes")
     total_nodes = cur.fetchone()[0]
     cur.execute("SELECT COUNT(*) FROM relay_settings")
