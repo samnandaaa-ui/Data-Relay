@@ -1087,3 +1087,48 @@
     }
   ]
 }
+
+{
+  "id": "MDS3",
+  "nama": "MDS 3",
+  "incoming": {
+    "ct_ratio": "",
+    "vt_ratio": "",
+    "relay": {"enabled": false}
+  },
+  "outgoing": [
+    {
+      "id": "OUT_ZHONGBU",
+      "nama": "ZHONGBU",
+      "relay": {
+        "ocrl": {"enabled": false},
+        "ocrh": {"enabled": false},
+        "gfrl": {"enabled": false},
+        "gfrh": {"enabled": false}
+      },
+      "note": "Belum ada data setting."
+    },
+    {
+      "id": "OUT_VOK",
+      "nama": "VOK",
+      "relay": {
+        "ocrl": {"enabled": false},
+        "ocrh": {"enabled": false},
+        "gfrl": {"enabled": false},
+        "gfrh": {"enabled": false}
+      },
+      "note": "Belum ada data setting."
+    },
+    {
+      "id": "OUT_TRAFO",
+      "nama": "TRAFO",
+      "relay": {
+        "ocrl": {"enabled": false},
+        "ocrh": {"enabled": false},
+        "gfrl": {"enabled": false},
+        "gfrh": {"enabled": false}
+      },
+      "note": "Belum ada data setting."
+    }
+  ]
+}
