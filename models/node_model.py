@@ -92,23 +92,24 @@ def get_ancestor_path(node_id):
 
 def get_display_bundle(node_id):
     """
-    Menangani pola "OUT_X -> X" di data sumber (mis. node "OUT_TDS1" yang
-    anak tunggalnya adalah node "TDS1", dan keduanya ber-nama sama persis
-    "TDS 1" -- itu 2 relay fisik berbeda tapi 1 lokasi yang sama di mata
-    teknisi). Kalau pola ini terdeteksi, gabungkan jadi satu "tampilan
-    efektif": kartu relay dari SEMUA node di rantai itu ditampilkan
-    bersamaan, tapi tombol lanjut/anak diambil dari node PALING BAWAH
-    rantai -- supaya teknisi tidak tap 2x utk 2 layar yang namanya sama.
+    Menangani pasangan "Outgoing X -> X" (mis. node "Outgoing MDS 1" yang
+    anak tunggalnya adalah hub "MDS 1") -- 2 relay fisik berbeda (sisi
+    pengirim vs sisi penerima), tapi 1 lokasi yang sama di mata teknisi.
+    Kalau pola ini terdeteksi, gabungkan jadi satu "tampilan efektif":
+    kartu relay dari SEMUA node di rantai itu ditampilkan bersamaan,
+    judul layar pakai nama hub TUJUAN (mis. "MDS 1", bukan
+    "Outgoing MDS 1"), dan tombol lanjut/anak diambil dari hub tujuan itu.
 
-    Rantai HANYA disambung kalau anak tunggal itu nama-nya identik dengan
-    node saat ini -- node dgn nama beda (mis. MSS -> "MDS 1") tidak pernah
-    digabung, walau anaknya cuma satu.
+    Rantai disambung SELAMA node saat ini adalah node "Outgoing" (node_key
+    diawali "OUT_") dan anak tunggalnya adalah hub tujuan -- bukan lagi
+    berdasarkan nama yang sama persis (karena sekarang nama "Outgoing X"
+    dan "X" memang sengaja dibuat beda).
     """
     chain_ids = [node_id]
     current = get_node(node_id)
-    while True:
+    while current["node_key"].startswith("OUT_"):
         children = get_children(current["id"])
-        if len(children) == 1 and children[0]["nama"] == current["nama"]:
+        if len(children) == 1:
             current = children[0]
             chain_ids.append(current["id"])
         else:
@@ -123,15 +124,17 @@ def get_display_bundle(node_id):
 
 def get_display_path(node_id):
     """
-    Seperti get_ancestor_path, tapi menggabungkan pasangan OUT_X/X yang
-    ber-nama sama berurutan jadi 1 entri breadcrumb (konsisten dgn
-    get_display_bundle) -- supaya breadcrumb tidak menampilkan nama yang
-    sama dua kali berturut-turut (mis. "TDS 1 > TDS 1").
+    Ambil breadcrumb dari akar sampai node_id ini, dengan entry "Outgoing
+    X" yang cuma jadi pembungkus menuju hub berikutnya DIHILANGKAN dari
+    tampilan (supaya breadcrumb tidak menyebut "Outgoing MDS 1" dst,
+    cukup nama hub tujuannya saja) -- kecuali kalau entry itu sendiri
+    adalah node yang sedang dilihat (leaf outgoing tanpa hub lanjutan).
     """
     raw_path = get_ancestor_path(node_id)
     deduped = []
-    for node in raw_path:
-        if deduped and deduped[-1]["nama"] == node["nama"]:
+    for i, node in enumerate(raw_path):
+        is_last = (i == len(raw_path) - 1)
+        if node["node_key"].startswith("OUT_") and not is_last:
             continue
         deduped.append(node)
     return deduped

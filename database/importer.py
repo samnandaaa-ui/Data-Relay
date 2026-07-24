@@ -2,14 +2,22 @@
 database/importer.py
 Import data relay dari relay_database.json (assets/) ke SQLite.
 
+File JSON sumbernya berisi beberapa objek JSON terpisah yang ditempel
+berurutan (bukan satu dokumen JSON valid, bukan array) -- fungsi
+_load_json_objects membaca itu dengan aman.
+
 STRUKTUR HIERARKI (revisi lapangan Juli 2026):
-Setiap "hub" (MSS, MDS 1, TDS 1, TDS 2, MDS 2, TDS 3, MDS 3) TIDAK PERNAH
-menampilkan kartu relay-nya sendiri secara langsung -- kalau ada data
-relay utk hub itu, otomatis dijadikan anak tersendiri bernama
-"Incoming <nama hub>". Anak-anak outgoing diganti namanya jadi format
-"Outgoing <Nama>" (atau "Trafo" khusus transformator, tanpa awalan) dan
-TETAP menampilkan kartu relay-nya sendiri (tidak digabung/collapse
-dengan node lain).
+Setiap "hub" (MSS, MDS 1, TDS 1, TDS 2, MDS 2, TDS 3, MDS 3) langsung
+menampilkan kartu relay incoming-nya sendiri (tidak perlu tap tambahan).
+Anak-anak outgoing (mis. "OUT_TDS1", "OUT_POLTEK") diganti namanya jadi
+format "Outgoing <Nama>" (atau "Trafo" khusus transformator, tanpa
+awalan) dan TETAP menampilkan kartu relay-nya sendiri -- kalau entry itu
+juga jadi pintu ke hub lain (mis. "Outgoing TDS 1" -> hub "TDS 1"),
+keduanya digabung jadi satu layar (lihat get_display_bundle di
+node_model.py), judul layarnya pakai nama hub tujuan.
+
+Aman dijalankan berkali-kali: import_all() menghapus data hierarki lama
+dulu sebelum menulis ulang (idempotent).
 """
 
 import json
@@ -112,16 +120,19 @@ def _insert_relay_settings(cur, node_id, relay_dict):
 
 def _insert_hub(cur, node_key, nama, parent_id, is_root, ct_ratio, vt_ratio,
                  relay_dict, sumber_luar=None):
+    """
+    Bikin 1 node "hub" (MSS, MDS 1, TDS 1, dst). Kartu relay incoming
+    hub ini langsung nempel di hub itu sendiri (BUKAN anak terpisah
+    "Incoming X" yang perlu di-tap lagi) -- begitu masuk ke GH ini,
+    kartu incoming-nya langsung kelihatan, sekaligus daftar anak
+    outgoing-nya di layar yang sama.
+    """
     hub_id = _insert_node(
         cur, node_key=node_key, nama=nama, parent_id=parent_id,
         node_type="root" if is_root else "panel",
         ct_ratio=ct_ratio, vt_ratio=vt_ratio, sumber_luar=sumber_luar,
     )
-    incoming_id = _insert_node(
-        cur, node_key=f"IN_{node_key}", nama=f"Incoming {nama}",
-        parent_id=hub_id, node_type="output",
-    )
-    _insert_relay_settings(cur, incoming_id, relay_dict)
+    _insert_relay_settings(cur, hub_id, relay_dict)
     return hub_id
 
 
@@ -228,6 +239,7 @@ def import_all(json_path):
             _process_outgoing_entry(cur, child, hub_id, standalone_lookup, visited)
 
     conn.commit()
+
     cur.execute("SELECT COUNT(*) FROM nodes")
     total_nodes = cur.fetchone()[0]
     cur.execute("SELECT COUNT(*) FROM relay_settings")

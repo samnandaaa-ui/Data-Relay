@@ -93,7 +93,7 @@ class NodeScreen(Screen):
     def _render(self):
         bundle = get_display_bundle(self.current_node_id)
         display_node = bundle["display_node"]
-        path = get_display_path(self.current_node_id)
+        path = get_display_path(display_node["id"])
 
         self.title_text = display_node["nama"]
         self.breadcrumb_text = (
