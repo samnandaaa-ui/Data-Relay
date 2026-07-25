@@ -195,6 +195,20 @@ origin/main` lalu re-apply manual (bukan git merge):
   gampang bikin sesi macet/bingung. `git config --global core.pager cat`
   sudah diaktifkan utk mencegah ini terulang.
 
+## CATATAN TEKNIS KIVYMD (penting utk polish tahap ini)
+- `class X(ButtonBehavior, MDCard)` GAGAL: "Cannot create a consistent
+  method resolution order (MRO) for bases ButtonBehavior, MDCard" --
+  rantai turunan MDCard bentrok dgn ButtonBehavior. JANGAN diulang.
+- Solusi yang dipakai: widgets/relay_card.py tetap pakai
+  `ButtonBehavior, BoxLayout` polos (bukan MDCard) + canvas.before manual
+  (RoundedRectangle utk kartu+bayangan, Rectangle utk strip status warna
+  kiri) -- kombinasi ini TERBUKTI stabil sejak awal project, dipakai lagi
+  drpd coba widget KivyMD baru yg belum tentu kompatibel & tidak bisa
+  diuji Claude sendiri (tidak ada KivyMD/display di sandbox Claude).
+- Kalau mau pakai widget KivyMD lain yg butuh tappable (MDCard, dll),
+  test dulu kombinasi inheritance-nya hati2, atau pertimbangkan tetap
+  pakai pola BoxLayout+ButtonBehavior+canvas manual yg sudah terbukti.
+
 ## LANGKAH SELANJUTNYA
 1. Sarankan user jalan ulang `python3 main.py` setelah Bagian 4 ini
    diterima -- errornya HARUS tetap persis "Unable to get a Window", itu
