@@ -1,13 +1,15 @@
 """
 screens/node_screen.py
-Layar generik dipakai ulang utk SEMUA level hierarki (MDS 1, TDS 1,
-output, dst) -- satu screen, bukan satu screen per level.
+Layar generik dipakai ulang utk SEMUA level hierarki -- satu screen,
+bukan satu screen per level.
 
-Sejak Tahap 9B: memakai get_display_bundle() dari node_model, sehingga
-pasangan "OUT_X -> X" yang ber-nama sama (mis. OUT_TDS1 -> TDS1, sama-sama
-"TDS 1") tampil sebagai SATU layar dengan 2 kelompok kartu relay berlabel
-beda ("Relay outgoing dari ..." / "Relay incoming ..."), bukan 2 layar
-tap terpisah seperti versi 9A.
+Setiap layar menampilkan: kartu incoming milik node itu sendiri, LALU
+utk tiap anak: kalau anak itu adalah "Outgoing X" yang jadi pintu ke hub
+lain (mis. "Outgoing MDS 1" -> hub "MDS 1"), kartu relay anak itu
+ditampilkan LANGSUNG DI SINI (di layar induknya, krn breaker itu secara
+fisik ada di induk), diikuti tombol navigasi terpisah ke hub tujuannya.
+Kalau anak itu tidak menuju hub lain (leaf, mis. "Trafo"), cukup tombol
+biasa spt sebelumnya (kartunya baru tampil setelah di-tap).
 """
 
 from kivy.lang import Builder
@@ -19,11 +21,14 @@ from kivy.uix.popup import Popup
 from kivy.properties import StringProperty
 from kivy.metrics import dp
 
-from models.node_model import get_node, get_display_bundle, get_display_path, delete_node
+from models.node_model import get_node, get_children, get_display_bundle, get_display_path, delete_node
 from models.relay_model import get_relay_cards
 from widgets.relay_card import RelayCard
+from config.theme import COLORS
 
 Builder.load_string(r"""
+#:import COLORS config.theme.COLORS
+
 <NodeScreen>:
     BoxLayout:
         orientation: "vertical"
@@ -45,7 +50,7 @@ Builder.load_string(r"""
             Label:
                 text: root.breadcrumb_text
                 font_size: "14sp"
-                color: (0.4, 0.4, 0.4, 1)
+                color: COLORS["text_secondary"]
                 halign: "right"
                 valign: "middle"
                 text_size: self.width, self.height
@@ -56,7 +61,7 @@ Builder.load_string(r"""
             bold: True
             size_hint_y: None
             height: dp(44)
-            color: (0.1, 0.1, 0.1, 1)
+            color: COLORS["text_primary"]
             halign: "left"
             text_size: self.width, None
 
@@ -87,15 +92,18 @@ class NodeScreen(Screen):
         node = get_node(self.current_node_id)
         if node is None or node["parent_id"] is None:
             self.manager.current = "home"
+            return
+        path = get_display_path(self.current_node_id)
+        if len(path) <= 1:
+            self.manager.current = "home"
         else:
-            self.load_node(node["parent_id"])
+            self.load_node(path[-2]["id"])
 
     def _render(self):
-        bundle = get_display_bundle(self.current_node_id)
-        display_node = bundle["display_node"]
-        path = get_display_path(display_node["id"])
+        node = get_node(self.current_node_id)
+        path = get_display_path(self.current_node_id)
 
-        self.title_text = display_node["nama"]
+        self.title_text = node["nama"]
         self.breadcrumb_text = (
             " > ".join(p["nama"] for p in path[:-1]) if len(path) > 1 else ""
         )
@@ -103,45 +111,39 @@ class NodeScreen(Screen):
         container = self.ids.content_list
         container.clear_widgets()
 
-        if display_node.get("sumber_luar"):
-            container.add_widget(
-                self._info_label(f"Sumber: {display_node['sumber_luar']}")
-            )
+        if node.get("sumber_luar"):
+            container.add_widget(self._info_label(f"Sumber: {node['sumber_luar']}"))
+        if node.get("note"):
+            container.add_widget(self._info_label(node["note"]))
 
-        chain = bundle["chain_node_ids"]
-        for idx, nid in enumerate(chain):
-            node = get_node(nid)
-            if node.get("note"):
-                container.add_widget(self._info_label(node["note"]))
+        for card in get_relay_cards(self.current_node_id):
+            container.add_widget(self._card_widget(self.current_node_id, node["nama"], card))
 
-            cards = get_relay_cards(nid)
+        for child in get_children(self.current_node_id):
+            bundle = get_display_bundle(child["id"])
+            if len(bundle["chain_node_ids"]) > 1:
+                container.add_widget(self._section_label(child["nama"]))
+                for card in get_relay_cards(child["id"]):
+                    container.add_widget(self._card_widget(child["id"], child["nama"], card))
+                container.add_widget(self._nav_button(bundle["display_node"]))
+            else:
+                container.add_widget(self._child_button(child))
 
-            if len(chain) > 1:
-                if idx < len(chain) - 1:
-                    parent = get_node(node["parent_id"])
-                    heading = f"Relay outgoing dari {parent['nama']}"
-                else:
-                    heading = f"Relay incoming {node['nama']}"
-                container.add_widget(self._section_label(heading))
+        container.add_widget(self._add_button(self.current_node_id))
+        container.add_widget(self._delete_button(node["nama"]))
 
-            for card in cards:
-                card_widget = RelayCard(
-                    label=card["label"],
-                    lines_text="\n".join(card["lines"]),
-                    enabled_flag=card["enabled"],
-                    relay_type=card["type"],
-                )
-                card_widget.bind(
-                    on_release=lambda *_a, n=nid, rt=card["type"], nm=node["nama"]:
-                        self._open_relay_edit(n, rt, nm)
-                )
-                container.add_widget(card_widget)
-
-        for child in bundle["children"]:
-            container.add_widget(self._child_button(child))
-
-        container.add_widget(self._add_button(display_node["id"]))
-        container.add_widget(self._delete_button(display_node["nama"]))
+    def _card_widget(self, node_id, node_nama, card):
+        card_widget = RelayCard(
+            label=card["label"],
+            lines_text="\n".join(card["lines"]),
+            enabled_flag=card["enabled"],
+            relay_type=card["type"],
+        )
+        card_widget.bind(
+            on_release=lambda *_a, n=node_id, rt=card["type"], nm=node_nama:
+                self._open_relay_edit(n, rt, nm)
+        )
+        return card_widget
 
     def _open_relay_edit(self, node_id, relay_type, node_nama):
         edit_screen = self.manager.get_screen("relay_edit")
@@ -155,22 +157,18 @@ class NodeScreen(Screen):
 
     def _add_button(self, parent_id):
         btn = Button(
-            text="+ Tambah GH di sini",
-            font_size="18sp",
-            size_hint_y=None,
-            height=dp(56),
-            background_color=(0.3, 0.5, 0.75, 1),
+            text="+ Tambah GH di sini", font_size="18sp",
+            size_hint_y=None, height=dp(56),
+            background_color=COLORS["accent"],
         )
         btn.bind(on_release=lambda *_a: self._open_add_node(parent_id))
         return btn
 
     def _delete_button(self, nama):
         btn = Button(
-            text="Hapus GH ini",
-            font_size="18sp",
-            size_hint_y=None,
-            height=dp(56),
-            background_color=(0.75, 0.15, 0.15, 1),
+            text="Hapus GH ini", font_size="18sp",
+            size_hint_y=None, height=dp(56),
+            background_color=COLORS["danger"],
         )
         btn.bind(on_release=lambda *_a: self._confirm_delete(nama))
         return btn
@@ -180,13 +178,12 @@ class NodeScreen(Screen):
         content.add_widget(Label(
             text=f'Hapus "{nama}" beserta semua kartu relay dan\n'
                  f'seluruh turunannya? Tindakan ini tidak bisa dibatalkan.',
-            font_size="16sp",
-            halign="center",
+            font_size="16sp", color=COLORS["text_primary"], halign="center",
         ))
         btn_row = BoxLayout(size_hint_y=None, height=dp(56), spacing=dp(10))
         cancel_btn = Button(text="Batal", font_size="17sp")
         confirm_btn = Button(text="Ya, Hapus", font_size="17sp",
-                              background_color=(0.75, 0.15, 0.15, 1))
+                              background_color=COLORS["danger"])
         btn_row.add_widget(cancel_btn)
         btn_row.add_widget(confirm_btn)
         content.add_widget(btn_row)
@@ -198,19 +195,18 @@ class NodeScreen(Screen):
 
     def _do_delete(self, popup):
         popup.dismiss()
-        node = get_node(self.current_node_id)
-        parent_id = node["parent_id"]
+        path = get_display_path(self.current_node_id)
+        back_id = path[-2]["id"] if len(path) > 1 else None
         delete_node(self.current_node_id)
-        if parent_id is None:
+        if back_id is None:
             self.manager.current = "home"
         else:
-            self.load_node(parent_id)
+            self.load_node(back_id)
 
     def _info_label(self, text):
         lbl = Label(
             text=text, font_size="15sp", italic=True,
-            color=(0.5, 0.35, 0.1, 1), size_hint_y=None, height=dp(30),
-            halign="left",
+            color=COLORS["info"], size_hint_y=None, height=dp(30), halign="left",
         )
         lbl.bind(size=lbl.setter("text_size"))
         return lbl
@@ -218,8 +214,7 @@ class NodeScreen(Screen):
     def _section_label(self, text):
         lbl = Label(
             text=text, font_size="14sp", bold=True,
-            color=(0.35, 0.35, 0.35, 1), size_hint_y=None, height=dp(26),
-            halign="left",
+            color=COLORS["text_secondary"], size_hint_y=None, height=dp(26), halign="left",
         )
         lbl.bind(size=lbl.setter("text_size"))
         return lbl
@@ -230,4 +225,13 @@ class NodeScreen(Screen):
             size_hint_y=None, height=dp(64),
         )
         btn.bind(on_release=lambda *_a, c=child: self.load_node(c["id"]))
+        return btn
+
+    def _nav_button(self, hub_node):
+        btn = Button(
+            text=f"\u2192 Masuk {hub_node['nama']}",
+            font_size="18sp", size_hint_y=None, height=dp(56),
+            background_color=COLORS["accent"],
+        )
+        btn.bind(on_release=lambda *_a, h=hub_node: self.load_node(h["id"]))
         return btn
