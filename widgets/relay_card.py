@@ -1,72 +1,79 @@
 """
 widgets/relay_card.py
-Kartu tampilan satu jenis relay (OCRL/OCRH/GFRL/GFRH/Directional/Thermal).
-Dipakai berulang di NodeScreen untuk setiap kartu relay yang ada pada node.
-Tappable -- tap kartu manapun membuka form edit.
-
-VERSI KIVYMD (Material Design): dulu pakai BoxLayout+ButtonBehavior polos
-dengan canvas.before manual buat gambar rounded rect sendiri. Sekarang
-pakai MDCard asli (style "elevated") supaya dapat shadow/elevation
-Material asli + ripple effect bawaan saat disentuh -- TIDAK PERLU lagi
-gambar canvas manual.
-
-PENTING (KivyMD dari branch master/2.x via buildozer.spec, BUKAN versi
-stabil 1.x yang lebih umum di tutorial internet): MDCard sudah otomatis
-punya ButtonBehavior bawaan (event on_release asli), jadi cara PAKAI dari
-node_screen.py TIDAK BERUBAH SAMA SEKALI -- masih persis:
-    RelayCard(label=..., lines_text=..., enabled_flag=..., relay_type=...)
-    card_widget.bind(on_release=...)
-node_screen.py tidak perlu diedit sama sekali untuk perubahan ini.
-
-Warna latar kartu (enabled/disabled) TETAP ambil dari config/theme.py
-COLORS, karena warna itu punya MAKNA (hijau muda = ada data terisi,
-abu-abu = "Belum diisi") -- bukan sekadar warna dekoratif Material biasa,
-jadi tidak diserahkan ke tema Material otomatis.
+Kartu tampilan satu jenis relay (OCRL/OCRH/GFRL/GFRH/Directional/Thermal),
+gaya panel industrial: elevasi/bayangan jelas (MDCard) + indikator status
+bulat (hijau = terisi & aktif, abu = belum diisi), mirip status indicator
+di software SCADA. Tappable (ButtonBehavior) -- tap kartu manapun
+membuka form edit. Warna dari config/theme.py (ikut dark mode Android).
 """
 
 from kivy.lang import Builder
-from kivy.properties import StringProperty, BooleanProperty
-
+from kivy.uix.behaviors import ButtonBehavior
 from kivymd.uix.card import MDCard
+from kivy.properties import StringProperty, BooleanProperty
 
 Builder.load_string(r"""
 #:import COLORS config.theme.COLORS
 
 <RelayCard>:
-    style: "elevated"
-    ripple_behavior: True
     orientation: "vertical"
     size_hint_y: None
     height: self.minimum_height
-    padding: dp(16)
+    padding: dp(16), dp(14), dp(16), dp(14)
     spacing: dp(6)
-    radius: [dp(14)]
+    radius: dp(6)
     theme_bg_color: "Custom"
-    md_bg_color: COLORS["card_enabled"] if self.enabled_flag else COLORS["card_disabled"]
+    md_bg_color: COLORS["card_pressed"] if self.state == "down" else (COLORS["card_enabled"] if self.enabled_flag else COLORS["card_disabled"])
+    theme_shadow_color: "Custom"
+    shadow_color: 0, 0, 0, 0.45
+    theme_shadow_offset: "Custom"
+    shadow_offset: (0, -2)
+    theme_shadow_softness: "Custom"
+    shadow_softness: 6
+    theme_elevation_level: "Custom"
+    elevation_level: 1
 
-    MDLabel:
-        text: root.label
-        font_style: "Title"
-        role: "medium"
-        adaptive_height: True
-        halign: "left"
-        text_size: self.width, None
-        theme_text_color: "Custom"
-        text_color: COLORS["text_primary"]
+    BoxLayout:
+        size_hint_y: None
+        height: max(dp(22), title_lbl.texture_size[1])
+        spacing: dp(10)
 
-    MDLabel:
+        Widget:
+            size_hint: None, None
+            size: dp(10), dp(10)
+            pos_hint: {"center_y": 0.5}
+            canvas.before:
+                Color:
+                    rgba: COLORS["status_ok"] if root.enabled_flag else COLORS["status_neutral"]
+                Ellipse:
+                    pos: self.pos
+                    size: self.size
+
+        Label:
+            id: title_lbl
+            text: root.label
+            font_size: "20sp"
+            bold: True
+            color: COLORS["text_primary"]
+            size_hint_y: None
+            height: self.texture_size[1]
+            halign: "left"
+            valign: "middle"
+            text_size: self.width, None
+
+    Label:
         text: root.lines_text
-        font_style: "Body"
-        role: "large"
-        adaptive_height: True
+        font_size: "17sp"
+        color: COLORS["text_primary"] if root.enabled_flag else COLORS["text_disabled"]
+        size_hint_y: None
+        height: self.texture_size[1]
         halign: "left"
+        valign: "top"
         text_size: self.width, None
-        theme_text_color: "Custom"
-        text_color: COLORS["text_primary"] if root.enabled_flag else COLORS["text_disabled"]
 """)
 
 
-class RelayCard(MDCard):
+class RelayCard(ButtonBehavior, MDCard):
     label = StringProperty("")
     lines_text = StringProperty("")
     enabled_flag = BooleanProperty(True)

@@ -1,56 +1,53 @@
 """
 config/theme.py
-Palet warna light/dark terpusat + deteksi tema Android saat ini.
+Palet warna bergaya panel industrial (SCADA/ABB/Schneider-like): dasar
+gelap netral, aksen biru teknikal, indikator status hijau/abu/merah yang
+tegas -- bukan warna pastel. Deteksi tema Android tetap dipakai; light
+mode juga dibuat lebih "teknikal" (abu dingin, bukan putih polos).
 
-SEMUA warna di widgets/screens HARUS diambil dari COLORS di sini, bukan
-angka RGB ditulis langsung di masing-masing file -- supaya dark mode
-konsisten di seluruh app sekaligus, dan gampang diubah di satu tempat.
-
-Catatan desain: tema dideteksi SEKALI saat app pertama dibuka (saat modul
-ini di-import), bukan reaktif kalau tema Android berubah sementara app
-lagi jalan -- kompromi supaya tidak perlu logic listener konfigurasi
-Android yang jauh lebih rumit. Kalau user ganti tema HP di tengah app
-berjalan, cukup buka ulang app-nya.
+SEMUA warna di widgets/screens HARUS diambil dari COLORS di sini.
 """
 
 _LIGHT = {
-    "bg": (0.97, 0.97, 0.97, 1),
-    "text_primary": (0.1, 0.1, 0.1, 1),
-    "text_secondary": (0.4, 0.4, 0.4, 1),
-    "text_disabled": (0.55, 0.55, 0.55, 1),
-    "card_enabled": (0.90, 0.95, 0.90, 1),
-    "card_disabled": (0.92, 0.92, 0.92, 1),
-    "card_pressed": (0.84, 0.90, 0.99, 1),
+    "bg": (0.93, 0.94, 0.95, 1),
+    "surface": (1, 1, 1, 1),
+    "text_primary": (0.08, 0.10, 0.12, 1),
+    "text_secondary": (0.38, 0.42, 0.46, 1),
+    "text_disabled": (0.60, 0.63, 0.66, 1),
+    "card_enabled": (1, 1, 1, 1),
+    "card_disabled": (0.88, 0.89, 0.91, 1),
+    "card_pressed": (0.85, 0.91, 0.98, 1),
     "input_bg": (1, 1, 1, 1),
-    "accent": (0.3, 0.5, 0.75, 1),
+    "accent": (0.10, 0.42, 0.68, 1),
     "danger": (0.75, 0.15, 0.15, 1),
-    "save": (0.2, 0.55, 0.3, 1),
-    "info": (0.5, 0.35, 0.1, 1),
+    "save": (0.15, 0.50, 0.30, 1),
+    "info": (0.55, 0.40, 0.05, 1),
+    "status_ok": (0.15, 0.55, 0.30, 1),
+    "status_neutral": (0.65, 0.67, 0.70, 1),
 }
 
 _DARK = {
-    "bg": (0.11, 0.11, 0.12, 1),
-    "text_primary": (0.92, 0.92, 0.92, 1),
-    "text_secondary": (0.68, 0.68, 0.68, 1),
-    "text_disabled": (0.55, 0.55, 0.55, 1),
-    "card_enabled": (0.14, 0.24, 0.16, 1),
-    "card_disabled": (0.20, 0.20, 0.21, 1),
-    "card_pressed": (0.16, 0.23, 0.33, 1),
-    "input_bg": (0.18, 0.18, 0.19, 1),
-    "accent": (0.40, 0.60, 0.85, 1),
-    "danger": (0.85, 0.40, 0.40, 1),
-    "save": (0.35, 0.70, 0.45, 1),
-    "info": (0.80, 0.60, 0.30, 1),
+    "bg": (0.06, 0.08, 0.10, 1),
+    "surface": (0.11, 0.13, 0.16, 1),
+    "text_primary": (0.90, 0.93, 0.95, 1),
+    "text_secondary": (0.58, 0.63, 0.68, 1),
+    "text_disabled": (0.45, 0.48, 0.52, 1),
+    "card_enabled": (0.11, 0.14, 0.17, 1),
+    "card_disabled": (0.13, 0.15, 0.17, 1),
+    "card_pressed": (0.14, 0.22, 0.32, 1),
+    "input_bg": (0.14, 0.16, 0.19, 1),
+    "accent": (0.25, 0.60, 0.88, 1),
+    "danger": (0.88, 0.35, 0.35, 1),
+    "save": (0.30, 0.68, 0.42, 1),
+    "info": (0.82, 0.62, 0.25, 1),
+    "status_ok": (0.30, 0.75, 0.45, 1),
+    "status_neutral": (0.38, 0.42, 0.47, 1),
 }
 
 
 def _detect_android_dark_mode():
-    """
-    Cek tema gelap/terang Android lewat pyjnius. Return False (terang)
-    kalau gagal deteksi apa pun sebabnya (mis. sedang tidak berjalan di
-    Android sungguhan, atau API berubah) -- JANGAN sampai app gagal buka
-    gara-gara deteksi tema ini, fallback aman selalu didahulukan.
-    """
+    """Cek tema gelap/terang Android lewat pyjnius. False (terang) kalau
+    gagal deteksi -- jangan sampai app crash gara-gara deteksi tema ini."""
     try:
         from jnius import autoclass
         PythonActivity = autoclass("org.kivy.android.PythonActivity")
@@ -65,71 +62,3 @@ def _detect_android_dark_mode():
 
 IS_DARK = _detect_android_dark_mode()
 COLORS = _DARK if IS_DARK else _LIGHT
-# ============================================================
-# DESIGN SYSTEM (Phase 1.1)
-# Jangan mengubah nilai di Screen.
-# Semua UI harus mengambil nilai dari sini.
-# ============================================================
-
-# Typography
-FONT = {
-    "display": 32,
-    "headline": 26,
-    "title": 22,
-    "subtitle": 18,
-    "body": 16,
-    "caption": 14,
-    "label": 12,
-}
-
-# Border Radius
-RADIUS = {
-    "xs": 8,
-    "sm": 12,
-    "md": 18,
-    "lg": 24,
-    "pill": 30,
-}
-
-# Padding & Margin
-SPACING = {
-    "xs": 4,
-    "sm": 8,
-    "md": 16,
-    "lg": 24,
-    "xl": 32,
-    "xxl": 48,
-}
-
-# Elevation
-ELEVATION = {
-    "low": 2,
-    "medium": 4,
-    "high": 8,
-}
-
-# Animation
-ANIMATION = {
-    "fast": 0.15,
-    "normal": 0.25,
-    "slow": 0.40,
-}
-
-# Shadow
-SHADOW = {
-    "blur": 12,
-    "opacity": 0.18,
-}
-
-# Icon
-ICON = {
-    "small": 18,
-    "normal": 24,
-    "large": 32,
-}
-
-# Screen Width Breakpoints
-BREAKPOINT = {
-    "mobile": 480,
-    "tablet": 720,
-}
